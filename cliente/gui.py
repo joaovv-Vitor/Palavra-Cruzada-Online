@@ -104,7 +104,6 @@ class MinhaJanela(QWidget):
 
 
 
-
 class SegundaJanela(QWidget):
     def __init__(self):
         super().__init__()
@@ -116,46 +115,52 @@ class SegundaJanela(QWidget):
         self.grid_layout = QGridLayout()
         self.grid_layout.setSpacing(0)
 
-        # Criando o tabuleiro 5x5
-        self.create_board(5, 5)
+        # Criando o tabuleiro com base na matriz fornecida
+        self.create_board()
 
         # Definindo o layout da janela
         self.setLayout(self.grid_layout)
 
-    def create_board(self, rows, cols):
-        # Preenchendo o tabuleiro com QLineEdit
-        for i in range(rows):
-            for j in range(cols):
+    def create_board(self):
+        # Matriz de palavras
+        matriz = [
+        [' ', ' ', ' ', ' ', ' ', ' ', 'j', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['A', ' ', 'm', ' ', 'i', ' ', 'g', ' ', 'o', ' ', ' ', ' ', ' '],
+        ['n', ' ', 'i', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['i', ' ', 'n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['m', ' ', 'e', ' ', 'n', ' ', 'i', ' ', 'n', ' ', 'o', ' ', ' '],
+        ['a', ' ', 'c', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['l', ' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', 'a', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', 'f', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', 't', ' ', 'a', ' ', 'r', ' ', 'e', ' ', 'f', ' ', 'a']
+        ]
+
+
+        # Preenchendo o tabuleiro com QLineEdit e as letras da matriz
+        for i in range(len(matriz)):
+            for j in range(len(matriz[i])):
                 cell = QLineEdit()
                 cell.setMaxLength(1)
                 cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 cell.setStyleSheet("QLineEdit { border: 1px solid black; }")
+                if matriz[i][j] != ' ':
+                    cell.setText(matriz[i][j])
+                    cell.setReadOnly(True)  # Torna a célula somente leitura se já tiver uma letra
                 self.grid_layout.addWidget(cell, i, j)
 
         # Adicionando dicas (números) nas células
-        self.grid_layout.addWidget(QLabel("1"), 0, 0)
-        self.grid_layout.addWidget(QLabel("2"), 0, 2)
-        self.grid_layout.addWidget(QLabel("3"), 2, 0)
-        self.grid_layout.addWidget(QLabel("4"), 2, 2)
+        self.grid_layout.addWidget(QLabel("1"), 0, 4)
+        self.grid_layout.addWidget(QLabel("2"), 2, 0)
+        self.grid_layout.addWidget(QLabel("3"), 2, 4)
+        self.grid_layout.addWidget(QLabel("4"), 5, 4)
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = SegundaJanela()
     window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Defina o IP e a porta do servidor aqui
-    server_ip = ""  # Substitua pelo IP do servidor
-    server_port = 12345       # Substitua pela porta do servidor
-
-    janela = MinhaJanela(server_ip, server_port)
-    janela.show()
-    sys.exit(app.exec())
-
+    app.exec_()
 
 
 
