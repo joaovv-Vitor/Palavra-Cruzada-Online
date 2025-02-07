@@ -80,7 +80,8 @@ def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket.bind((HOST, PORT))
         server_socket.listen()
-        print(f"Servidor TCP iniciado em {HOST}:{PORT}. Aguardando conexões...")
+        # Inicia o servidor TCP e aguarda conexões
+        print(f"Servidor TCP iniciado em {socket.gethostbyname(socket.gethostname())}:{PORT}. Aguardando conexões...")
 
         # Inicia o servidor de descoberta UDP em uma thread separada
         discovery_thread = Thread(target=handle_discovery, daemon=True)

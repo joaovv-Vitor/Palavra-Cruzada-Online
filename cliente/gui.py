@@ -4,6 +4,72 @@ import json
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QGridLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QPalette, QColor
+from network_utils import discover_server  # Importe a função discover_server do novo módulo
+
+class InitialWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Conectar ao Servidor")
+        self.setGeometry(550, 200, 400, 300)
+
+        # Configuração do fundo
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(240, 240, 240))
+        self.setPalette(palette)
+
+        # Label de boas-vindas
+        self.label = QLabel("Escolha uma opção para conectar ao servidor:", self)
+        self.label.setFont(QFont("Arial", 14))
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Botão para descoberta local
+        self.botao_descoberta = QPushButton("Descoberta Local", self)
+        self.botao_descoberta.setFont(QFont("Arial", 12))
+        self.botao_descoberta.setStyleSheet("background-color: #4CAF50; color: white; padding: 10px; border-radius: 5px;")
+        self.botao_descoberta.clicked.connect(self.descoberta_local)
+
+        # Caixa de texto para inserção manual do IP
+        self.caixa_ip = QLineEdit(self)
+        self.caixa_ip.setPlaceholderText("Digite o IP do servidor...")
+        self.caixa_ip.setFont(QFont("Arial", 12))
+        self.caixa_ip.setStyleSheet("padding: 10px;")
+
+        # Botão para conectar manualmente
+        self.botao_conectar = QPushButton("Conectar", self)
+        self.botao_conectar.setFont(QFont("Arial", 12))
+        self.botao_conectar.setStyleSheet("background-color: #008CBA; color: white; padding: 10px; border-radius: 5px;")
+        self.botao_conectar.clicked.connect(self.conectar_manual)
+
+        # Layout
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        layout.addWidget(self.botao_descoberta)
+        layout.addWidget(self.caixa_ip)
+        layout.addWidget(self.botao_conectar)
+        layout.setSpacing(20)
+        layout.setContentsMargins(50, 50, 50, 50)
+
+        self.setLayout(layout)
+
+    def descoberta_local(self):
+        server_ip = discover_server()
+        if server_ip:
+            self.abrir_janela_principal(server_ip)
+        else:
+            QMessageBox.critical(self, "Erro", "Não foi possível encontrar um servidor.")
+
+    def conectar_manual(self):
+        server_ip = self.caixa_ip.text().strip()
+        if server_ip:
+            self.abrir_janela_principal(server_ip)
+        else:
+            QMessageBox.critical(self, "Erro", "Por favor, digite um IP válido.")
+
+    def abrir_janela_principal(self, server_ip):
+        self.janela_principal = MinhaJanela(server_ip, 5000)
+        self.janela_principal.show()
+        self.hide()
 
 class MinhaJanela(QWidget):
     def __init__(self, server_ip, server_port):
@@ -184,6 +250,6 @@ class SegundaJanela(QWidget):
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = MinhaJanela("127.0.0.1", 5000)  # Substitua pelo IP e porta do servidor
+    window = InitialWindow()  # Substitua pela janela inicial
     window.show()
     sys.exit(app.exec())
