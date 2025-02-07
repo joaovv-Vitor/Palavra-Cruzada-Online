@@ -1,6 +1,6 @@
 import socket
 import json
-from threading import Thread
+from threading import Thread, Lock
 
 # Configurações do servidor
 HOST = ''  # Escuta em todas as interfaces de rede
@@ -32,6 +32,10 @@ dicas = [
     "6. Pessoa com quem se compartilha momentos e segredos."
 ]
 
+# Lista para armazenar os jogadores conectados
+jogadores = []
+jogadores_lock = Lock()
+
 # Função para responder a solicitações de descoberta UDP
 def handle_discovery():
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
@@ -54,6 +58,7 @@ class ClientHandler(Thread):
         self.nickname = None
 
     def run(self):
+        global jogadores
         print(f"Novo cliente conectado: {self.addr}")
 
         try:
@@ -62,12 +67,16 @@ class ClientHandler(Thread):
             self.nickname = self.conn.recv(1024).decode().strip()
             print(f"Cliente {self.addr} escolheu o nickname: {self.nickname}")
 
-            # Envia a matriz e as dicas como JSON
-            data = {
-                "matriz": matriz,
-                "dicas": dicas
-            }
-            self.conn.sendall(json.dumps(data).encode())
+            with jogadores_lock:
+                jogadores.append(self)
+                if len(jogadores) == 2:
+                    # Envia a matriz e as dicas para ambos os jogadores
+                    data = {
+                        "matriz": matriz,
+                        "dicas": dicas
+                    }
+                    for jogador in jogadores:
+                        jogador.conn.sendall(json.dumps(data).encode())
 
             # Aqui você pode adicionar a lógica do jogo ou iteração com o cliente
             while True:
@@ -75,6 +84,15 @@ class ClientHandler(Thread):
                 if not data:
                     break
                 print(f"Recebido de {self.nickname}: {data}")
+
+                # Verifica se o jogador completou a palavra cruzada
+                if data == "COMPLETED":
+                    with jogadores_lock:
+                        for jogador in jogadores:
+                            if jogador != self:
+                                jogador.conn.sendall(f"{self.nickname} venceu!".encode())
+                        jogadores = []
+                        break
 
                 # Exemplo de resposta ao cliente
                 self.conn.sendall(f"Você disse: {data}".encode())
@@ -84,6 +102,9 @@ class ClientHandler(Thread):
         finally:
             print(f"Cliente {self.addr} desconectado.")
             self.conn.close()
+            with jogadores_lock:
+                if self in jogadores:
+                    jogadores.remove(self)
 
 def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:

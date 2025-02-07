@@ -2,7 +2,7 @@ import sys
 import socket
 import json
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QGridLayout, QHBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal, QThread
 from PyQt6.QtGui import QFont, QPalette, QColor
 
 class MinhaJanela(QWidget):
@@ -41,12 +41,6 @@ class MinhaJanela(QWidget):
         self.botao_salvar.setStyleSheet("background-color: #4CAF50; color: white; padding: 10px; border-radius: 5px;")
         self.botao_salvar.clicked.connect(self.pegar_nome)
 
-        # Botão para abrir a segunda janela
-        self.botao_abrir_segunda_janela = QPushButton("Abrir Segunda Janela", self)
-        self.botao_abrir_segunda_janela.setFont(QFont("Arial", 14))
-        self.botao_abrir_segunda_janela.setStyleSheet("background-color: #008CBA; color: white; padding: 10px; border-radius: 5px;")
-        self.botao_abrir_segunda_janela.clicked.connect(self.abrir_segunda_janela)
-
         # Label para mostrar o resultado
         self.resultado = QLabel("", self)
         self.resultado.setFont(QFont("Arial", 14))
@@ -57,7 +51,6 @@ class MinhaJanela(QWidget):
         layout.addWidget(self.label)
         layout.addWidget(self.caixa_texto)
         layout.addWidget(self.botao_salvar)
-        layout.addWidget(self.botao_abrir_segunda_janela)
         layout.addWidget(self.resultado)
         layout.setSpacing(20)
         layout.setContentsMargins(50, 50, 50, 50)
@@ -81,7 +74,6 @@ class MinhaJanela(QWidget):
             resposta = self.tcp_socket.recv(1024).decode()
             self.resultado.setText(f"{resposta}")
             self.receber_dados_do_servidor()
-            self.abrir_segunda_janela()
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao enviar nome para o servidor: {e}")
 
@@ -91,17 +83,37 @@ class MinhaJanela(QWidget):
             dados = json.loads(data)
             self.matriz = dados['matriz']
             self.dicas = dados['dicas']
+            self.abrir_segunda_janela()
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao receber dados do servidor: {e}")
 
     def abrir_segunda_janela(self):
-        self.segunda_janela = SegundaJanela(self.matriz, self.dicas)
+        self.segunda_janela = SegundaJanela(self.matriz, self.dicas, self.tcp_socket)
         self.segunda_janela.show()
         self.hide()
 
-class SegundaJanela(QWidget):
-    def __init__(self, matriz, dicas):
+class ListenThread(QThread):
+    message_received = pyqtSignal(str)
+
+    def __init__(self, tcp_socket):
         super().__init__()
+        self.tcp_socket = tcp_socket
+
+    def run(self):
+        while True:
+            try:
+                data = self.tcp_socket.recv(1024).decode()
+                if data:
+                    self.message_received.emit(data)
+                    break
+            except Exception as e:
+                print(f"Erro ao ouvir o servidor: {e}")
+                break
+
+class SegundaJanela(QWidget):
+    def __init__(self, matriz, dicas, tcp_socket):
+        super().__init__()
+        self.tcp_socket = tcp_socket
 
         self.setWindowTitle("Palavras Cruzadas")
         self.setGeometry(550, 200, 1200, 600)  # Aumentei a largura da janela para acomodar a label de dicas
@@ -128,6 +140,11 @@ class SegundaJanela(QWidget):
 
         # Definindo o layout da janela
         self.setLayout(layout_horizontal)
+
+        # Inicia a thread para ouvir mensagens do servidor
+        self.listen_thread = ListenThread(self.tcp_socket)
+        self.listen_thread.message_received.connect(self.show_message)
+        self.listen_thread.start()
 
     def create_board(self):
         # Preenchendo o tabuleiro com QLineEdit e as letras da matriz
@@ -159,10 +176,14 @@ class SegundaJanela(QWidget):
                     if cell.text().lower() != self.matriz[i][j].lower():
                         return False
         QMessageBox.information(self, "Parabéns!", "Você completou a palavra corretamente!")
+        self.tcp_socket.sendall("COMPLETED".encode())
         return True
+
+    def show_message(self, message):
+        QMessageBox.information(self, "Resultado", message)
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = MinhaJanela("", 5000)  # Substitua pelo IP e porta do servidor
+    window = MinhaJanela("127.0.0.1", 5000)  # Substitua pelo IP e porta do servidor
     window.show()
     sys.exit(app.exec())
