@@ -23,6 +23,9 @@ def handle_discovery():
                 print(f"Recebida solicitação de descoberta de {addr}")
                 udp_socket.sendto("DISCOVERY_RESPONSE".encode(), addr)
 
+
+
+
 class ClientHandler(Thread):
     def __init__(self, conn, addr):
         super().__init__()
@@ -47,7 +50,8 @@ class ClientHandler(Thread):
                 if not data:
                     break
                 print(f"Recebido de {self.nickname}: {data}")
-        
+
+                
 
 
 

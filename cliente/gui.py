@@ -1,12 +1,8 @@
 import sys
 import socket
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox
-from PyQt6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QLineEdit, QLabel
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QMainWindow, QGridLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPalette, QColor
-from PyQt6.QtCore import Qt
-import time
-
 
 class MinhaJanela(QWidget):
     def __init__(self, server_ip, server_port):
@@ -68,7 +64,7 @@ class MinhaJanela(QWidget):
     def pegar_nome(self):
         nome = self.caixa_texto.text()
         if nome:
-            self.resultado.setText(f"Nome salvo{nome}")
+            self.resultado.setText(f"Nome salvo: {nome}")
             self.enviar_nome_para_servidor(nome)
         else:
             self.resultado.setText("Por favor, digite um nome!")
@@ -81,15 +77,7 @@ class MinhaJanela(QWidget):
             self.tcp_socket.sendall(nome.encode())
             resposta = self.tcp_socket.recv(1024).decode()
             self.resultado.setText(f"{resposta}")
-            self.segunda_janela = SegundaJanela()  # Cria uma instância da segunda janela
-            self.segunda_janela.show()  # Exibe a segunda janela
-            self.hide()
-            
-                
-            
-
-
-
+            self.abrir_segunda_janela()
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao enviar nome para o servidor: {e}")
         finally:
@@ -98,11 +86,9 @@ class MinhaJanela(QWidget):
                 self.tcp_socket = None
 
     def abrir_segunda_janela(self):
-        self.segunda_janela = SegundaJanela()  # Cria uma instância da segunda janela
-        self.segunda_janela.show()  # Exibe a segunda janela
-        self.close()  # Oculta a janela atual
-
-
+        self.segunda_janela = SegundaJanela()
+        self.segunda_janela.show()
+        self.hide()
 
 class SegundaJanela(QWidget):
     def __init__(self):
@@ -123,53 +109,47 @@ class SegundaJanela(QWidget):
 
     def create_board(self):
         # Matriz de palavras
-        matriz = [
-        [' ', ' ', ' ', ' ', ' ', ' ', 'j', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
-        ['A', ' ', 'm', ' ', 'i', ' ', 'g', ' ', 'o', ' ', ' ', ' ', ' '],
-        ['n', ' ', 'i', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
-        ['i', ' ', 'n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        ['m', ' ', 'e', ' ', 'n', ' ', 'i', ' ', 'n', ' ', 'o', ' ', ' '],
-        ['a', ' ', 'c', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        ['l', ' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', 'a', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', 'f', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', 't', ' ', 'a', ' ', 'r', ' ', 'e', ' ', 'f', ' ', 'a']
+        self.matriz = [
+            [' ', ' ', ' ', ' ', ' ', ' ', 'j', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['A', ' ', 'm', ' ', 'i', ' ', 'g', ' ', 'o', ' ', ' ', ' ', ' '],
+            ['n', ' ', 'i', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['i', ' ', 'n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['m', ' ', 'e', ' ', 'n', ' ', 'i', ' ', 'n', ' ', 'o', ' ', ' '],
+            ['a', ' ', 'c', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            ['l', ' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', 'a', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', 'f', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', 't', ' ', 'a', ' ', 'r', ' ', 'e', ' ', 'f', ' ', 'a']
         ]
 
-
         # Preenchendo o tabuleiro com QLineEdit e as letras da matriz
-        for i in range(len(matriz)):
-            for j in range(len(matriz[i])):
-                cell = QLineEdit()
-                cell.setMaxLength(1)
-                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                cell.setStyleSheet("QLineEdit { border: 1px solid black; }")
-                if matriz[i][j] != ' ':
-                    cell.setText(matriz[i][j])
-                    cell.setReadOnly(True)  # Torna a célula somente leitura se já tiver uma letra
+        for i in range(len(self.matriz)):
+            for j in range(len(self.matriz[i])):
+                if self.matriz[i][j] == ' ':
+                    cell = QLabel()  # Use QLabel para espaços em branco
+                    cell.setStyleSheet("QLabel { border: 1px solid black; }")
+                else:
+                    cell = QLineEdit()
+                    cell.setMaxLength(1)
+                    cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    cell.setStyleSheet("QLineEdit { border: 1px solid black; }")
+                    cell.textChanged.connect(self.verificar_palavra)
                 self.grid_layout.addWidget(cell, i, j)
 
-        # Adicionando dicas (números) nas células
-        self.grid_layout.addWidget(QLabel("1"), 0, 4)
-        self.grid_layout.addWidget(QLabel("2"), 2, 0)
-        self.grid_layout.addWidget(QLabel("3"), 2, 4)
-        self.grid_layout.addWidget(QLabel("4"), 5, 4)
+    # Função para verificar se a palavra está correta
+    def verificar_palavra(self):
+        for i in range(len(self.matriz)):
+            for j in range(len(self.matriz[i])):
+                if self.matriz[i][j] != ' ':
+                    cell = self.grid_layout.itemAtPosition(i, j).widget()
+                    if cell.text().lower() != self.matriz[i][j].lower():
+                        return False
+        QMessageBox.information(self, "Parabéns!", "Você completou a palavra corretamente!")
+        return True
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = SegundaJanela()
+    window = MinhaJanela("", 12345)  # Substitua pelo IP e porta do servidor
     window.show()
-    app.exec_()
-
-
-
-
-
-
-
-
-
-
-
-
+    sys.exit(app.exec())
