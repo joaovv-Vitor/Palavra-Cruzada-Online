@@ -1,13 +1,36 @@
 import socket
-import random
-import string
+import json
 from threading import Thread
-import ast  # Para usar ast.literal_eval em vez de eval
 
 # Configurações do servidor
 HOST = ''  # Escuta em todas as interfaces de rede
 PORT = 5000  # Porta do servidor
 BROADCAST_PORT = 5001  # Porta para descoberta UDP
+
+# Matriz de palavras e dicas
+matriz = [
+    [' ', ' ', ' ', ' ', '1', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', 'j', ' ', ' ', ' '],
+    [' ', '3', '2', ' ', 'o', ' ', ' ', ' '],
+    ['6', 'A', 'm', 'i', 'g', 'o', ' ', ' '],
+    [' ', 'n', 'i', ' ', 'o', ' ', ' ', ' '],
+    [' ', 'i', 'n', ' ', ' ', ' ', ' ', ' '],
+    ['4', 'm', 'e', 'n', 'i', 'n', 'o', ' '],
+    [' ', 'a', 'c', ' ', ' ', ' ', ' ', ' '],
+    [' ', 'l', 'r', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', 'a', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', 'f', ' ', ' ', ' ', ' ', ' '],
+    [' ', '5', 't', 'a', 'r', 'e', 'f', 'a']
+]
+
+dicas = [
+    "1. Atividade recreativa ou competitiva.",
+    "2. Jogo mais famoso feito em java",
+    "3. Ser vivo que não é planta.",
+    "4. Criança do sexo masculino.",
+    "5. Atividade a ser realizada.",
+    "6. Pessoa com quem se compartilha momentos e segredos."
+]
 
 # Função para responder a solicitações de descoberta UDP
 def handle_discovery():
@@ -23,16 +46,11 @@ def handle_discovery():
                 print(f"Recebida solicitação de descoberta de {addr}")
                 udp_socket.sendto("DISCOVERY_RESPONSE".encode(), addr)
 
-
-
-
 class ClientHandler(Thread):
     def __init__(self, conn, addr):
         super().__init__()
         self.conn = conn
         self.addr = addr
-        self.found_words = []
-        self.score = 0
         self.nickname = None
 
     def run(self):
@@ -44,67 +62,19 @@ class ClientHandler(Thread):
             self.nickname = self.conn.recv(1024).decode().strip()
             print(f"Cliente {self.addr} escolheu o nickname: {self.nickname}")
 
-            # Aqui você pode adicionar a lógica do jogo ou iteração com o clienten
+            # Envia a matriz e as dicas como JSON
+            data = {
+                "matriz": matriz,
+                "dicas": dicas
+            }
+            self.conn.sendall(json.dumps(data).encode())
+
+            # Aqui você pode adicionar a lógica do jogo ou iteração com o cliente
             while True:
                 data = self.conn.recv(1024).decode().strip()
                 if not data:
                     break
                 print(f"Recebido de {self.nickname}: {data}")
-
-                
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 # Exemplo de resposta ao cliente
                 self.conn.sendall(f"Você disse: {data}".encode())

@@ -1,4 +1,5 @@
 import socket
+import json
 from PyQt6.QtWidgets import QApplication
 from gui import MinhaJanela  # Certifique-se de que o arquivo gui.py está no mesmo diretório
 import sys
@@ -6,7 +7,6 @@ import sys
 # Configurações do cliente
 BROADCAST_PORT = 5001  # Porta de descoberta UDP
 TIMEOUT = 5  # Tempo de espera para a resposta do servidor (em segundos)
-
 
 def discover_server():
     # Cria um socket UDP
@@ -30,28 +30,19 @@ def discover_server():
             print("Nenhum servidor encontrado.")
             return None
 
-
 def connect_to_server(server_ip):
     # Conecta ao servidor via TCP
     PORT = 5000  # Porta TCP do servidor
     try:
-
-
-        
         # Inicia a aplicação PyQt6
         app = QApplication(sys.argv)
         janela = MinhaJanela(server_ip, PORT)  # Cria a janela com o IP e a porta do servidor
         janela.show()  # Exibe a janela
         sys.exit(app.exec())  # Executa o loop de eventos da interface gráfica
-
-
-
-
     except Exception as e:
         print(f"Erro ao conectar ao servidor: {e}")
     finally:
         print("Desconectado do servidor.")
-
 
 if __name__ == "__main__":
     # Descobre o servidor na rede

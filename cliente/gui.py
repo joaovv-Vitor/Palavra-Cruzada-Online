@@ -1,12 +1,9 @@
 import sys
 import socket
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QMainWindow, QGridLayout
+import json
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QGridLayout, QHBoxLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPalette, QColor
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QMainWindow, QGridLayout, QHBoxLayout
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QPalette, QColor
-
 
 class MinhaJanela(QWidget):
     def __init__(self, server_ip, server_port):
@@ -14,6 +11,8 @@ class MinhaJanela(QWidget):
         self.server_ip = server_ip
         self.server_port = server_port
         self.tcp_socket = None
+        self.matriz = None
+        self.dicas = None
 
         self.setWindowTitle("Janela de Boas-Vindas")
         self.setGeometry(550, 200, 600, 700)
@@ -81,21 +80,27 @@ class MinhaJanela(QWidget):
             self.tcp_socket.sendall(nome.encode())
             resposta = self.tcp_socket.recv(1024).decode()
             self.resultado.setText(f"{resposta}")
+            self.receber_dados_do_servidor()
             self.abrir_segunda_janela()
         except Exception as e:
             QMessageBox.critical(self, "Erro", f"Erro ao enviar nome para o servidor: {e}")
-        finally:
-            if self.tcp_socket:
-                self.tcp_socket.close()
-                self.tcp_socket = None
+
+    def receber_dados_do_servidor(self):
+        try:
+            data = self.tcp_socket.recv(4096).decode()
+            dados = json.loads(data)
+            self.matriz = dados['matriz']
+            self.dicas = dados['dicas']
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro ao receber dados do servidor: {e}")
 
     def abrir_segunda_janela(self):
-        self.segunda_janela = SegundaJanela()
+        self.segunda_janela = SegundaJanela(self.matriz, self.dicas)
         self.segunda_janela.show()
         self.hide()
 
 class SegundaJanela(QWidget):
-    def __init__(self):
+    def __init__(self, matriz, dicas):
         super().__init__()
 
         self.setWindowTitle("Palavras Cruzadas")
@@ -106,17 +111,12 @@ class SegundaJanela(QWidget):
         self.grid_layout.setSpacing(0)
 
         # Criando o tabuleiro com base na matriz fornecida
+        self.matriz = matriz
         self.create_board()
 
-        dica = "1. Atividade recreativa ou competitiva.\
-                \n2. Jogo mais famoso feito em java\
-                \n3. Ser vivo que não é planta.\
-                \n4. Criança do sexo masculino.\
-                \n5. Atividade a ser realizada.\
-                \n6. Pessoa com quem se compartilha momentos e segredos."
-
         # Criando a label de dicas
-        self.dicas_label = QLabel(dica)
+        dicas_texto = "\n".join(dicas)
+        self.dicas_label = QLabel(dicas_texto)
         self.dicas_label.setFont(QFont("Arial", 14))
         self.dicas_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.dicas_label.setStyleSheet("padding: 10px; border: 1px solid black;")
@@ -130,21 +130,6 @@ class SegundaJanela(QWidget):
         self.setLayout(layout_horizontal)
 
     def create_board(self):
-        self.matriz = [
-            [' ', ' ', ' ',' ','1',' ', ' ', ' '],
-            [' ', ' ', ' ',' ','j',' ', ' ', ' '],
-            [' ', '3', '2',' ','o',' ', ' ', ' '],
-            ['6', 'A', 'm','i','g','o', ' ', ' '],
-            [' ', 'n', 'i',' ','o',' ', ' ', ' '],
-            [' ', 'i', 'n',' ',' ',' ', ' ',' '],
-            ['4', 'm', 'e', 'n', 'i', 'n','o' ' ', ' ',],
-            [' ', 'a', 'c',' ', ' ',' ', ' ',' '],
-            [' ', 'l', 'r',' ', ' ', ' ', ' ', ' ',],
-            [' ', ' ', 'a',' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', 'f',' ', ' ', ' ', ' ', ' '],
-            [' ', '5', 't','a','r','e','f','a']
-        ]
-
         # Preenchendo o tabuleiro com QLineEdit e as letras da matriz
         for i in range(len(self.matriz)):
             for j in range(len(self.matriz[i])):
@@ -169,7 +154,7 @@ class SegundaJanela(QWidget):
     def verificar_palavra(self):
         for i in range(len(self.matriz)):
             for j in range(len(self.matriz[i])):
-                if self.matriz[i][j] != ' ' and self.matriz[i][j] not in ['1', '2', '3', '4', '5']:
+                if self.matriz[i][j] != ' ' and self.matriz[i][j] not in ['1', '2', '3', '4', '5', '6']:
                     cell = self.grid_layout.itemAtPosition(i, j).widget()
                     if cell.text().lower() != self.matriz[i][j].lower():
                         return False
@@ -178,6 +163,6 @@ class SegundaJanela(QWidget):
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = MinhaJanela("127.0.0.1", 5000)  # Substitua pelo IP e porta do servidor
+    window = MinhaJanela("", 5000)  # Substitua pelo IP e porta do servidor
     window.show()
     sys.exit(app.exec())
