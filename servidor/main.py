@@ -37,7 +37,7 @@ class ClientHandler(Thread):
 
         try:
             # Solicita o nickname do cliente
-            self.conn.sendall("Digite seu nickname: ".encode())
+            self.conn.sendall("Nome salvo".encode())
             self.nickname = self.conn.recv(1024).decode().strip()
             print(f"Cliente {self.addr} escolheu o nickname: {self.nickname}")
 
