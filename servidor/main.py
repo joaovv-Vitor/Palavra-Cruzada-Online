@@ -1,40 +1,15 @@
 import socket
 import json
 from threading import Thread, Lock
+from gameManager import GameManager
 
 # Configurações do servidor
 HOST = ''  # Escuta em todas as interfaces de rede
 PORT = 5000  # Porta do servidor
 BROADCAST_PORT = 5001  # Porta para descoberta UDP
 
-# Matriz de palavras e dicas
-matriz = [
-    [' ', ' ', ' ', ' ', '1', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', 'j', ' ', ' ', ' '],
-    [' ', '3', '2', ' ', 'o', ' ', ' ', ' '],
-    ['6', 'A', 'm', 'i', 'g', 'o', ' ', ' '],
-    [' ', 'n', 'i', ' ', 'o', ' ', ' ', ' '],
-    [' ', 'i', 'n', ' ', ' ', ' ', ' ', ' '],
-    ['4', 'm', 'e', 'n', 'i', 'n', 'o', ' '],
-    [' ', 'a', 'c', ' ', ' ', ' ', ' ', ' '],
-    [' ', 'l', 'r', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', 'a', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', 'f', ' ', ' ', ' ', ' ', ' '],
-    [' ', '5', 't', 'a', 'r', 'e', 'f', 'a']
-]
-
-dicas = [
-    "1. Atividade recreativa ou competitiva.",
-    "2. Jogo mais famoso feito em java",
-    "3. Ser vivo que não é planta.",
-    "4. Criança do sexo masculino.",
-    "5. Atividade a ser realizada.",
-    "6. Pessoa com quem se compartilha momentos e segredos."
-]
-
-# Lista para armazenar os jogadores conectados
-jogadores = []
-jogadores_lock = Lock()
+# Inicializa o gerenciador de jogos
+game_manager = GameManager()
 
 # Função para responder a solicitações de descoberta UDP
 def handle_discovery():
@@ -56,9 +31,10 @@ class ClientHandler(Thread):
         self.conn = conn
         self.addr = addr
         self.nickname = None
+        self.game = None
 
     def run(self):
-        global jogadores
+        global game_manager
         print(f"Novo cliente conectado: {self.addr}")
 
         try:
@@ -67,16 +43,12 @@ class ClientHandler(Thread):
             self.nickname = self.conn.recv(1024).decode().strip()
             print(f"Cliente {self.addr} escolheu o nickname: {self.nickname}")
 
-            with jogadores_lock:
-                jogadores.append(self)
-                if len(jogadores) == 2:
-                    # Envia a matriz e as dicas para ambos os jogadores
-                    data = {
-                        "matriz": matriz,
-                        "dicas": dicas
-                    }
-                    for jogador in jogadores:
-                        jogador.conn.sendall(json.dumps(data).encode())
+            # Encontra ou cria um jogo para o jogador
+            self.game = game_manager.find_or_create_game()
+            self.game.add_player(self)
+
+            if self.game.is_full():
+                self.game.send_game_data()
 
             # Aqui você pode adicionar a lógica do jogo ou iteração com o cliente
             while True:
@@ -87,12 +59,9 @@ class ClientHandler(Thread):
 
                 # Verifica se o jogador completou a palavra cruzada
                 if data == "COMPLETED":
-                    with jogadores_lock:
-                        for jogador in jogadores:
-                            if jogador != self:
-                                jogador.conn.sendall(f"{self.nickname} venceu!".encode())
-                        jogadores = []
-                        break
+                    self.game.broadcast(f"{self.nickname} venceu!")
+                    game_manager.remove_game(self.game)
+                    break
 
                 # Exemplo de resposta ao cliente
                 self.conn.sendall(f"Você disse: {data}".encode())
@@ -102,9 +71,10 @@ class ClientHandler(Thread):
         finally:
             print(f"Cliente {self.addr} desconectado.")
             self.conn.close()
-            with jogadores_lock:
-                if self in jogadores:
-                    jogadores.remove(self)
+            if self.game:
+                self.game.jogadores.remove(self)
+                if not self.game.jogadores:
+                    game_manager.remove_game(self.game)
 
 def start_server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
