@@ -3,6 +3,10 @@ import socket
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QMainWindow, QGridLayout
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QPalette, QColor
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QLineEdit, QMessageBox, QMainWindow, QGridLayout, QHBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QPalette, QColor
+
 
 class MinhaJanela(QWidget):
     def __init__(self, server_ip, server_port):
@@ -95,7 +99,7 @@ class SegundaJanela(QWidget):
         super().__init__()
 
         self.setWindowTitle("Palavras Cruzadas")
-        self.setGeometry(100, 100, 500, 500)
+        self.setGeometry(550, 200, 1200, 600)  # Aumentei a largura da janela para acomodar a label de dicas
 
         # Definindo o layout do tabuleiro
         self.grid_layout = QGridLayout()
@@ -104,24 +108,41 @@ class SegundaJanela(QWidget):
         # Criando o tabuleiro com base na matriz fornecida
         self.create_board()
 
+        dica = "1. Atividade recreativa ou competitiva.\
+                \n2. Jogo mais famoso feito em java\
+                \n3. Ser vivo que não é planta.\
+                \n4. Criança do sexo masculino.\
+                \n5. Atividade a ser realizada.\
+                \n6. Pessoa com quem se compartilha momentos e segredos."
+
+        # Criando a label de dicas
+        self.dicas_label = QLabel(dica)
+        self.dicas_label.setFont(QFont("Arial", 14))
+        self.dicas_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.dicas_label.setStyleSheet("padding: 10px; border: 1px solid black;")
+
+        # Layout horizontal para o tabuleiro e a label de dicas
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addLayout(self.grid_layout)
+        layout_horizontal.addWidget(self.dicas_label)
+
         # Definindo o layout da janela
-        self.setLayout(self.grid_layout)
+        self.setLayout(layout_horizontal)
 
     def create_board(self):
-        # Matriz de palavras
         self.matriz = [
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', '1', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'j', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', '2', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', 'A', ' ', 'm', ' ', 'i', ' ', 'g', ' ', 'o', ' ', ' ', ' ', ' '],
-            [' ', 'n', ' ', 'i', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', 'i', ' ', 'n', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', 'm', ' ', 'e', ' ', 'n', ' ', 'i', ' ', 'n', ' ', 'o', ' ', ' '],
-            [' ', 'a', ' ', 'c', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', 'l', ' ', 'r', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', 'a', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', 'f', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-            [' ', ' ', ' ', 't', ' ', 'a', ' ', 'r', ' ', 'e', ' ', 'f', ' ', 'a']
+            [' ', ' ', ' ',' ','1',' ', ' ', ' '],
+            [' ', ' ', ' ',' ','j',' ', ' ', ' '],
+            [' ', '3', '2',' ','o',' ', ' ', ' '],
+            ['6', 'A', 'm','i','g','o', ' ', ' '],
+            [' ', 'n', 'i',' ','o',' ', ' ', ' '],
+            [' ', 'i', 'n',' ',' ',' ', ' ',' '],
+            ['4', 'm', 'e', 'n', 'i', 'n','o' ' ', ' ',],
+            [' ', 'a', 'c',' ', ' ',' ', ' ',' '],
+            [' ', 'l', 'r',' ', ' ', ' ', ' ', ' ',],
+            [' ', ' ', 'a',' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', 'f',' ', ' ', ' ', ' ', ' '],
+            [' ', '5', 't','a','r','e','f','a']
         ]
 
         # Preenchendo o tabuleiro com QLineEdit e as letras da matriz
@@ -130,6 +151,12 @@ class SegundaJanela(QWidget):
                 if self.matriz[i][j] == ' ':
                     cell = QLabel()  # Use QLabel para espaços em branco
                     cell.setStyleSheet("QLabel { border: 1px solid black; }")
+                elif self.matriz[i][j] in ['1', '2', '3', '4', '5', '6']:
+                    cell = QLineEdit()
+                    cell.setText(self.matriz[i][j])
+                    cell.setReadOnly(True)
+                    cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                    cell.setStyleSheet("QLineEdit { border: 1px solid black; background-color: lightgray; }")
                 else:
                     cell = QLineEdit()
                     cell.setMaxLength(1)
@@ -142,7 +169,7 @@ class SegundaJanela(QWidget):
     def verificar_palavra(self):
         for i in range(len(self.matriz)):
             for j in range(len(self.matriz[i])):
-                if self.matriz[i][j] != ' ':
+                if self.matriz[i][j] != ' ' and self.matriz[i][j] not in ['1', '2', '3', '4', '5']:
                     cell = self.grid_layout.itemAtPosition(i, j).widget()
                     if cell.text().lower() != self.matriz[i][j].lower():
                         return False
@@ -151,6 +178,6 @@ class SegundaJanela(QWidget):
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = MinhaJanela("", 12345)  # Substitua pelo IP e porta do servidor
+    window = MinhaJanela("127.0.0.1", 5000)  # Substitua pelo IP e porta do servidor
     window.show()
     sys.exit(app.exec())
