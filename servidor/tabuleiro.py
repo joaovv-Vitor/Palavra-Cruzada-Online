@@ -9,7 +9,6 @@ def escolherTabuleiro():
     tabuleiros = [
         Tabuleiro(
             matriz=[
-
                 # Gabarito           
                 # 1 = jogo 
                 # 2 = minecraft
@@ -77,9 +76,6 @@ def escolherTabuleiro():
                 "8. Linguagem usada para manipulação de bancos de dados relacionais."
             ]
         ),
-
-        
-
         # Adicione mais tabuleiros aqui, se necessário
     ]
     return random.choice(tabuleiros)
