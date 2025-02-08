@@ -78,15 +78,6 @@ class ClientHandler(Thread):
                     game_manager.remove_game(self.game)
 
 def start_server():
-    # Escolhe um tabuleiro e imprime no console
-    tabuleiro = escolherTabuleiro()
-    print("Tabuleiro escolhido:")
-    for linha in tabuleiro.matriz:
-        print(" ".join(linha))
-    print("\nDicas:")
-    for dica in tabuleiro.dicas:
-        print(dica)
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket.bind((HOST, PORT))
         server_socket.listen()

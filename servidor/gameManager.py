@@ -1,18 +1,15 @@
-import random
-import json
 from game import Game
-from tabuleiro import Tabuleiro, escolherTabuleiro
+from tabuleiro import escolherTabuleiro
 
 class GameManager:
     def __init__(self):
         self.games = []
-        self.tabuleiro = escolherTabuleiro()
 
     def find_or_create_game(self):
         for game in self.games:
             if not game.is_full():
                 return game
-        new_game = Game(self.tabuleiro.matriz, self.tabuleiro.dicas)
+        new_game = Game(escolherTabuleiro().matriz, escolherTabuleiro().dicas)
         self.games.append(new_game)
         return new_game
 

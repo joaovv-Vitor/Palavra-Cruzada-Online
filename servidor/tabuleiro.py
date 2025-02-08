@@ -79,6 +79,7 @@ def escolherTabuleiro():
         ),
 
         
+
         # Adicione mais tabuleiros aqui, se necessário
     ]
     return random.choice(tabuleiros)
