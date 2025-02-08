@@ -195,7 +195,7 @@ class SegundaJanela(QWidget):
         # Criando a label de dicas
         dicas_texto = "\n".join(dicas)
         self.dicas_label = QLabel(dicas_texto)
-        self.dicas_label.setFont(QFont("Arial", 14))
+        self.dicas_label.setFont(QFont("Arial", 10))
         self.dicas_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.dicas_label.setStyleSheet("padding: 10px; border: 1px solid black;")
 
@@ -219,7 +219,7 @@ class SegundaJanela(QWidget):
                 if self.matriz[i][j] == ' ':
                     cell = QLabel()  # Use QLabel para espaços em branco
                     cell.setStyleSheet("QLabel { border: 1px solid black; }")
-                elif self.matriz[i][j] in ['1', '2', '3', '4', '5', '6']:
+                elif self.matriz[i][j] in ['1', '2', '3', '4', '5', '6', '7', '8']:
                     cell = QLineEdit()
                     cell.setText(self.matriz[i][j])
                     cell.setReadOnly(True)

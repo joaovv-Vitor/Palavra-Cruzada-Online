@@ -1,4 +1,3 @@
-import json
 import sys
 from PyQt6.QtWidgets import QApplication
 from gui import InitialWindow  # Certifique-se de que o arquivo gui.py está no mesmo diretório
